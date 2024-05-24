@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="shortcut icon" type="x-icon" href="leave.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee Leave Monitoring</title>
+    <link rel="stylesheet" href="leavemonitoring.css" />
+
+    <script
+      type="text/javascript"
+      src="https://www.gstatic.com/charts/loader.js"
+    ></script>
+    <script type="text/javascript">
+      google.charts.load("current", { packages: ["corechart"] });
+      google.charts.setOnLoadCallback(initialize);
+
+      function initialize() {
+        // Add sample data to local storage if not already present
+        if (!localStorage.getItem("leaveApplications")) {
+          const sampleData = [
+            {
+              employeeId: 123456,
+              name: "John Doe",
+              leaveType: "Sick Leave",
+              startDate: "2024-01-10",
+              endDate: "2024-01-12",
+              reason: "Flu",
+            },
+            {
+              employeeId: 123456,
+              name: "John Doe",
+              leaveType: "Maternity Leave",
+              startDate: "2024-02-15",
+              endDate: "2024-02-20",
+              reason: "Baby birth",
+            },
+            {
+              employeeId: 654321,
+              name: "Jane Smith",
+              leaveType: "Bereavement Leave",
+              startDate: "2024-03-05",
+              endDate: "2024-03-07",
+              reason: "Loss in family",
+            },
+            {
+              employeeId: 123456,
+              name: "John Doe",
+              leaveType: "Sick Leave",
+              startDate: "2024-04-01",
+              endDate: "2024-04-03",
+              reason: "Cold",
+            },
+            {
+              employeeId: 654321,
+              name: "Jane Smith",
+              leaveType: "Sick Leave",
+              startDate: "2024-01-20",
+              endDate: "2024-01-22",
+              reason: "Fever",
+            },
+          ];
+          localStorage.setItem("leaveApplications", JSON.stringify(sampleData));
+        }
+        drawChart();
+      }
+
+      function drawChart(employeeId = null) {
+        // Retrieve data from local storage
+        let leaveApplications =
+          JSON.parse(localStorage.getItem("leaveApplications")) || [];
+
+        // Filter data if an employee ID is provided
+        if (employeeId) {
+          leaveApplications = leaveApplications.filter(
+            (application) => application.employeeId == employeeId
+          );
+        }
+
+        // Process data to get the chart format
+        let processedData = processLeaveData(leaveApplications);
+
+        // Debug: Log processed data to console
+        console.log("Processed Data:", processedData);
+
+        // Create data table for Google Chart
+        var data = google.visualization.arrayToDataTable(processedData);
+
+        var options = {
+          title: "LEAVES",
+          curveType: "function",
+          legend: { position: "bottom" },
+          vAxis: { minValue: 0, title: "COUNT" }, // Ensures the minimum value on the y-axis is 0
+          hAxis: { title: "MONTH" },
+          chartArea: { width: "65%", height: "65%" },
+        };
+
+        var chart = new google.visualization.LineChart(
+          document.getElementById("curve_chart")
+        );
+
+        chart.draw(data, options);
+      }
+
+      function processLeaveData(leaveApplications) {
+        let leaveData = {
+          January: {
+            "Sick Leave": 0,
+            "Maternity Leave": 0,
+            "Bereavement Leave": 0,
+          },
+          February: {
+            "Sick Leave": 0,
+            "Maternity Leave": 0,
+            "Bereavement Leave": 0,
+          },
+          March: {
+            "Sick Leave": 0,
+            "Maternity Leave": 0,
+            "Bereavement Leave": 0,
+          },
+          April: {
+            "Sick Leave": 0,
+            "Maternity Leave": 0,
+            "Bereavement Leave": 0,
+          },
+          // Add other months as needed
+        };
+
+        leaveApplications.forEach((application) => {
+          let month = new Date(application.startDate).toLocaleString(
+            "default",
+            { month: "long" }
+          );
+          if (
+            leaveData[month] &&
+            leaveData[month][application.leaveType] !== undefined
+          ) {
+            leaveData[month][application.leaveType]++;
+          }
+        });
+
+        let chartData = [
+          ["Month", "Sick Leave", "Maternity Leave", "Bereavement Leave"],
+        ];
+        for (let month in leaveData) {
+          chartData.push([
+            month,
+            leaveData[month]["Sick Leave"],
+            leaveData[month]["Maternity Leave"],
+            leaveData[month]["Bereavement Leave"],
+          ]);
+        }
+
+        return chartData;
+      }
+
+      function viewEmployee() {
+        const employeeId = document.getElementById("employee-id").value;
+        drawChart(employeeId);
+      }
+
+      function viewAllEmployees() {
+        drawChart();
+      }
+    </script>
+  </head>
+  <body>
+    <div class="parent">
+      <div class="div1 heading">
+        <h1>Employee Leave Monitoring</h1>
+      </div>
+
+      <div class="div2">
+        <form onsubmit="event.preventDefault(); viewEmployee();">
+          <label for="employee-id">Enter Employee ID:</label>
+          <input type="number" id="employee-id" autocomplete="off" />
+          <button type="submit">View</button>
+          <button type="button" onclick="viewAllEmployees()">View All</button>
+        </form>
+      </div>
+
+      <div
+        id="curve_chart"
+        class="chart"
+        style="width: 900px; height: 500px"
+      ></div>
+    </div>
+  </body>
+</html>
